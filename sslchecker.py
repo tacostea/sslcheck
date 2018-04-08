@@ -37,9 +37,11 @@ def ssl_expires_in(hostname, buffer_days=7):
   expires = ssl_expiry_datetime(hostname)
   print(hostname, expires)
   remaining = expires - datetime.datetime.utcnow()
-  if remaining.days < 3:
+  if remaining.days < 0 and remaining.days >= -7:
+    mastodon.toot("[OOPS] " + hostname + " : Cert has expired " + str(remaining.days) + " days ago!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ'))
+  elif remaining.days <= 3 and remaining.days >= 0:
     mastodon.toot("[WARN] " + hostname + " : Cert will expire in " + str(remaining.days) + " day(s)!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ'))
-  elif remaining.days < buffer_days:
+  elif remaining.days <= buffer_days and remaining.days > 3:
     mastodon.toot("[INFO] " + hostname + " : Cert will expire in " + str(remaining.days) + " days\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ'))
     return True
   else:
@@ -51,6 +53,7 @@ if __name__=='__main__':
   hostnames = f.readlines()
   f.close()
   
+  f = open('error.log', 'w+')
   for hostname in hostnames:
     hostname =  hostname.strip()
     try:
@@ -58,4 +61,5 @@ if __name__=='__main__':
     except Exception as e:
       e_str = re.sub(r'\[.+\]', "", str(e))
       #print(hostname,e)
-      print("[ERROR] " + hostname + " : " + e_str)
+      f.write( hostname + " : " + e_str)
+  f.close()
