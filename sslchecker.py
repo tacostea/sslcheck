@@ -5,19 +5,16 @@ import socket
 import ssl
 import OpenSSL
 from mastodon import Mastodon 
-from logging import getLogger, StreamHandler, DEBUG
+from logging import getLogger, basicConfig, DEBUG, WARN
 
 mastodon = Mastodon(
   client_id="certchecker_clientcred.secret",
   access_token="certchecker_usercred.secret",
   api_base_url = "https://don.tacostea.net"
 )
+basicConfig(filename="sslcheck.log", level=DEBUG)
+basicConfig(filename="error.log", level=WARN)
 logger = getLogger(__name__)
-handler = StreamHandler()
-handler.setLevel(DEBUG)
-logger.setLevel(DEBUG)
-logger.addHandler(handler)
-logger.propagate = False
  
 def ssl_expiry_datetime(hostname):
   x509_date_fmt = r"b'%Y%m%d%H%M%SZ'"
@@ -35,10 +32,10 @@ def ssl_valid_time_remaining(hostname):
 
 def ssl_expires_in(hostname, buffer_days=7):
   expires = ssl_expiry_datetime(hostname)
-  print(hostname, expires)
+  logger.debug(hostname + " : " + expires.isoformat())
   remaining = expires - datetime.datetime.utcnow()
   if remaining.days < 0 and remaining.days >= -7:
-    mastodon.toot("[OOPS] " + hostname + " : Cert has expired " + str(remaining.days) + " days ago!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ'))
+    mastodon.toot("[OOPS] " + hostname + " : Cert has expired " + str(-1 * remaining.days) + " days ago!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ'))
   elif remaining.days <= 3 and remaining.days >= 0:
     mastodon.toot("[WARN] " + hostname + " : Cert will expire in " + str(remaining.days) + " day(s)!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ'))
   elif remaining.days <= buffer_days and remaining.days > 3:
@@ -53,13 +50,10 @@ if __name__=='__main__':
   hostnames = f.readlines()
   f.close()
   
-  f = open('error.log', 'w+')
   for hostname in hostnames:
     hostname =  hostname.strip()
     try:
       ssl_expires_in(hostname)
     except Exception as e:
       e_str = re.sub(r'\[.+\]', "", str(e))
-      #print(hostname,e)
-      f.write( hostname + " : " + e_str)
-  f.close()
+      logger.warn(hostname + " : " + e_str)
