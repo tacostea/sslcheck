@@ -35,11 +35,11 @@ def ssl_expires_in(hostname, buffer_days=7):
   logger.debug(hostname + " : " + expires.isoformat())
   remaining = expires - datetime.datetime.utcnow()
   if remaining.days < 0 and remaining.days >= -7:
-    mastodon.toot("[OOPS] " + hostname + " : Cert has expired " + str(-1 * remaining.days) + " days ago!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "#tacobot")
+    mastodon.toot("[OOPS] " + hostname + " : Cert has expired " + str(-1 * remaining.days) + " days ago!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot")
   elif remaining.days <= 3 and remaining.days >= 0:
-    mastodon.toot("[WARN] " + hostname + " : Cert will expire in " + str(remaining.days) + " day(s)!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "#tacobot")
+    mastodon.toot("[WARN] " + hostname + " : Cert will expire in " + str(remaining.days) + " day(s)!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot")
   elif remaining.days <= buffer_days and remaining.days > 3:
-    mastodon.toot("[INFO] " + hostname + " : Cert will expire in " + str(remaining.days) + " days\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "#tacobot")
+    mastodon.toot("[INFO] " + hostname + " : Cert will expire in " + str(remaining.days) + " days\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot")
     return True
   else:
     return False
