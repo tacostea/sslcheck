@@ -33,14 +33,17 @@ def ssl_valid_time_remaining(hostname):
 def ssl_expires_in(hostname, buffer_days=7):
   expires = ssl_expiry_datetime(hostname)
   logger.debug(hostname + " : " + expires.isoformat())
-  remaining = expires - datetime.datetime.utcnow()
-  if remaining.days < 0 and remaining.days >= -7:
-    mastodon.toot("[OOPS] " + hostname + " : Cert has expired " + str(-1 * remaining.days) + " days ago!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot")
-  elif remaining.days <= 3 and remaining.days >= 0:
-    mastodon.toot("[WARN] " + hostname + " : Cert will expire in " + str(remaining.days) + " day(s)!\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot")
-  elif remaining.days <= buffer_days and remaining.days > 3:
-    mastodon.toot("[INFO] " + hostname + " : Cert will expire in " + str(remaining.days) + " days\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot")
-    return True
+  remain = expires - datetime.datetime.utcnow()
+  if remain.days >= -6 and remain.days <= buffer_days:
+		if remain.days < 0 and remain.days >= -6 and remain.days % 2 = 0:
+			message = "[OOPS] " + hostname + " : Cert has expired " + str(-1 * remain.days) + " day(s) ago!"
+		elif remain.days <= 3 and remain.days >= 0:
+			message ="[WARN] " + hostname + " : Cert will expire in " + str(remain.days) + " day(s)!"
+		elif remain.days <= buffer_days and remain.days > 3 and remain.days % 2 = 0:
+			message = "[INFO] " + hostname + " : Cert will expire in " + str(remain.days) + " day(s)"
+		message += "\n Due: " + expires.strftime('%Y-%m-%d %H:%M:%SZ') + "\n#tacobot"
+		mastodon.toot(message)
+		return True
   else:
     return False
 
