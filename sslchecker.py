@@ -37,7 +37,9 @@ def ssl_expires_in(hostname, buffer_days=7):
         if remain.days < 0 and remain.days >= -6 and remain.days % 2 == 0:
             message = "[OOPS] " + hostname + " : Cert has expired " + str(
                 -1 * remain.days) + " day(s) ago!"
-        elif remain.days <= 3 and remain.days >= 0:
+        elif remain.days == 0:
+            message = "[WHY...]" + hostname + " : Admin are you kidding users? It's gone in 24 hour!"
+        elif remain.days <= 3 and remain.days > 0:
             message = "[WARN] " + hostname + " : Cert will expire in " + str(
                 remain.days) + " day(s)!"
         elif remain.days <= buffer_days and remain.days > 3 and remain.days % 2 == 0:
