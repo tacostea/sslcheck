@@ -8,6 +8,10 @@ import requests
 from mastodon import Mastodon
 from logging import getLogger, basicConfig, DEBUG, WARN
 
+import psycopg2
+import psycopg2.extras
+import postgresql
+
 
 mastodon = Mastodon(
     client_id="certchecker_clientcred.secret",
@@ -16,6 +20,8 @@ mastodon = Mastodon(
 basicConfig(filename="debug.log", level=DEBUG)
 basicConfig(filename="error.log", level=WARN)
 logger = getLogger(__name__)
+
+db = postgresql("pq://postgres@localhost/instances")
 
 
 def ssl_expiry_datetime(hostname):
@@ -40,8 +46,13 @@ def dm_to_admin(hostname, expires, remain):
         mastodon.status_post("@" + acct + "@" + hostname + " Hello, this is automatic message from SSLCheck bot. The SSL Certification for your instance " + hostname + " looks expiring in 1 day.\nDue(UTC): " + expires.strftime('%Y-%m-%d %H:%M:%S') + "\n* If you want stop just messages like this or stop checking(fetching), reply me whichever you want.", visibility='direct')
     except Exception as e:
       print(url,e)
+
 def ssl_expires_in(hostname, buffer_days=7):
     expires = ssl_expiry_datetime(hostname)
+    
+    insert_cert = db.prepare('UPDATE cert SET expiration = $2 WHERE uri = $1')
+    insert_cert(hostname, expires)
+    
     logger.debug(hostname + " : " + expires.isoformat())
     remain = expires - datetime.datetime.utcnow()
     if remain.days >= -6 and remain.days <= buffer_days:
